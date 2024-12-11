@@ -1,0 +1,693 @@
+---
+title: "Surv727 Final Project"
+author: "Landon Blacknall"
+format: html
+editor: visual
+---
+
+## Surv727 Final Project
+
+```{r}library(rvest)}
+library(tidyverse)
+library(tidytext)
+library(textdata)
+
+```
+
+Sentiment Analysis of Ronald Reagan's Supreme Court Justices
+
+```{r}# List of URLs of news articles}
+urls <- c(
+  "https://www.nytimes.com/1981/09/11/us/judge-o-connor-wins-praise-at-hearing.html",
+  "https://www.nytimes.com/1986/09/18/us/senate-65-to-33-votes-to-confirm-rehnquist-as-16th-chief-justice.html",
+  "https://www.nytimes.com/1986/08/06/us/scalia-returns-soft-answers-to-senators.html","https://www.nytimes.com/1988/02/04/us/senate-97-to-0-confirms-kennedy-to-high-court.html"
+)
+
+# Scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Reagan Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "ReaganSCjustices.csv")
+
+print("Combined articles saved to 'ReaganSCjustices.csv'")
+
+```
+
+Sentiment Analysis of George HW Bush's Supreme Court Justices
+
+```{r}
+# List of URLs of news articles
+urls <- c(
+  "https://www.nytimes.com/1990/10/03/us/senate-confirms-souter-90-to-9-as-supreme-court-s-105th-justice.html",
+  "https://www.nytimes.com/1991/10/16/us/thomas-confirmation-senate-confirms-thomas-52-48-ending-week-bitter-battle-time.html"
+)
+
+# Scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape 
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "HW Bush Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "HWBushSCjustices.csv")
+
+print("Combined articles saved to 'HWBUshSCjustices.csv'")
+
+```
+
+Sentiment Analysis of Bill Clinton's Supreme Court Justices
+
+```{r}
+
+urls <- c(
+  "https://www.nytimes.com/1993/08/04/us/senate-96-3-easily-affirms-judge-ginsburg-as-a-justice.html",
+  "https://www.nytimes.com/1994/07/14/us/supreme-court-analysis-portrait-pragmatist-confirmation-hearing-for-breyer.html"
+)
+
+# Scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape 
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Clinton Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "ClintonSCjustices.csv")
+
+print("Combined articles saved to 'CLintonSCjustices.csv'")
+
+```
+
+Sentiment Analysis of George W. Bush Supreme Court Justices
+
+```{r}
+urls <- c(
+  "https://www.nytimes.com/2005/09/30/world/americas/robertsconfirmed-on-78to22-senate-vote.html",
+  "https://www.nytimes.com/2006/01/31/politics/politicsspecial1/alito-is-sworn-in-as-justice-after-5842-vote-to.html"
+)
+
+# Scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape 
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Bush Jr. Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "BushJrSCjustices.csv")
+
+print("Combined articles saved to 'BushJrSCjustices.csv'")
+
+```
+
+Sentiment Analysis of President Obama Supreme Court Justices
+
+```{r}
+urls <- c(
+  "https://www.nytimes.com/2010/08/06/us/politics/06kagan.html",
+  "https://www.nytimes.com/2009/08/07/us/politics/07confirm.html"
+)
+
+# Function to scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape 
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Obama Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "ObamaSCjustices.csv")
+
+print("Combined articles saved to 'ObamaSCjustices.csv'")
+
+```
+
+Sentiment Analysis of President Trump Supreme Court Justices
+
+```{r}
+urls <- c(
+  "https://www.nytimes.com/2017/04/07/us/politics/neil-gorsuch-supreme-court.html",
+  "https://www.nytimes.com/2018/10/06/us/politics/brett-kavanaugh-supreme-court.html","https://www.nytimes.com/2020/10/26/us/politics/senate-confirms-barrett.html"
+)
+
+# Function to scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Trump Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "TrumpSCjustices.csv")
+
+print("Combined articles saved to 'TrumpSCjustices.csv'")
+
+```
+
+Sentiment Analysis of President Biden's Supreme Court Justices
+
+```{r}
+urls <- c(
+  "https://www.nytimes.com/live/2022/04/07/us/ketanji-brown-jackson-vote-scotus"
+)
+
+# Scrape text from a news article
+scrape_article <- function(url) {
+  tryCatch({
+    page <- read_html(url)
+    # Extract article text (adjust the CSS selector if needed)
+    text <- page %>%
+      html_nodes("p") %>%  # Assuming article text is in <p> tags
+      html_text() %>%
+      paste(collapse = " ")  # Combine paragraphs into one string
+    return(text)
+  }, error = function(e) {
+    return(NA)  # Return NA if scraping fails
+  })
+}
+
+# Scrape all articles
+articles <- tibble(
+  url = urls,
+  text = sapply(urls, scrape_article)
+)
+
+# Combine all articles into a single string
+all_text <- articles %>%
+  summarize(combined_text = paste(text, collapse = " ")) %>%
+  pull(combined_text)
+
+# Tokenize the combined text
+tokenized_text <- tibble(text = all_text) %>%
+  unnest_tokens(word, text)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_text %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(sentiment) %>%  # Count positive and negative words
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(total = positive + negative)  # Total sentiment-related words
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape 
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = sentiment, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Biden Appointed Justices",
+       x = "Sentiment",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+combined_text_df <- tibble(combined_text = all_text)
+write_csv(combined_text_df, "BidenSCjustices.csv")
+
+print("Combined articles saved to 'BidenSCjustices.csv'")
+
+```
+
+Creation of Bar graphs and Line Graphs for sentiment analysis of President's overtime
+
+```{r}
+# Load the four CSV files
+file1 <- read_csv("ReaganSCjustices.csv")
+file2 <- read_csv("HWBushSCjustices.csv")
+file3 <- read_csv("ClintonSCjustices.csv")
+file4 <- read_csv("BushJrSCjustices.csv")
+file5 <- read_csv("ObamaSCjustices.csv")
+file6 <- read_csv("TrumpSCjustices.csv")
+file7 <- read_csv("BidenSCjustices.csv")
+
+# Combine into a single dataset with a source label
+all_files <- bind_rows(
+  file1 %>% mutate(source = "ReaganSCjustices.csv"),
+  file2 %>% mutate(source = "HWBushSCjustices.csv"),
+  file3 %>% mutate(source = "ClintonSCjustices.csv"),
+  file4 %>% mutate(source = "BushJrSCjustices.csv"),
+  file5 %>% mutate(source = "ObamaSCjustices.csv"),
+  file6 %>% mutate(source = "TrumpSCjustices.csv"),
+  file7 %>% mutate(source = "BidenSCjustices.csv")
+)
+
+# View combined dataset
+head(all_files)
+
+# Tokenize text
+tokenized_data <- all_files %>%
+  unnest_tokens(word, combined_text)  # Replace `text_column` with the name of your text column
+
+# View tokenized data
+head(tokenized_data)
+
+# Load Bing sentiment lexicon
+bing_sentiments <- get_sentiments("bing")
+
+# Perform sentiment analysis
+sentiment_analysis <- tokenized_data %>%
+  inner_join(bing_sentiments, by = "word") %>%
+  count(source, sentiment) %>%  # Count positive/negative words by source
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(sentiment_score = positive - negative)  # Calculate sentiment score
+
+# View sentiment results
+print(sentiment_analysis)
+
+# Reshape
+sentiment_plot_data <- sentiment_analysis %>%
+  pivot_longer(cols = c(positive, negative), names_to = "sentiment", values_to = "count")
+
+# Create the bar graph
+ggplot(sentiment_plot_data, aes(x = source, y = count, fill = sentiment)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal() +
+  labs(title = "Sentiment Analysis Comparison Across Files",
+       x = "Source",
+       y = "Word Count",
+       fill = "Sentiment") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+# Create a summary of sentiment scores
+sentiment_summary <- sentiment_analysis %>%
+  select(source, sentiment_score)
+
+# View summary
+print(sentiment_summary)
+
+# Plot overall sentiment scores
+ggplot(sentiment_summary, aes(x = source, y = sentiment_score, fill = source)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Overall Sentiment Scores by President",
+       x = "Source",
+       y = "Sentiment Score",
+       fill = "Source") +
+  scale_fill_brewer(palette = "Set3")
+
+# Line graph for sentiment scores
+ggplot(sentiment_analysis, aes(x = source, y = sentiment_score, group = 1)) +
+  geom_line(color = "steelblue", size = 1) +  # Line
+  geom_point(color = "firebrick", size = 3) +  # Points
+  theme_minimal() +
+  labs(
+    title = "Sentiment Scores Across Files",
+    x = "Source (Files)",
+    y = "Sentiment Score",
+    caption = "Sentiment score = Positive - Negative"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis labels if needed
+  )
+
+# Reorder 
+sentiment_analysis <- sentiment_analysis %>%
+  mutate(source = factor(source, levels = c("ReaganSCjustices.csv", "HWBushSCjustices.csv", "ClintonSCjustices.csv", "BushJrSCjustices.csv", "ObamaSCjustices.csv", "TrumpSCjustices.csv", "BidenSCjustices.csv")))
+
+levels(sentiment_analysis$source)
+
+
+ggplot(sentiment_analysis, aes(x = source, y = sentiment_score, group = 1)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(color = "firebrick", size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Sentiment Scores from Reagan to Biden",
+    x = "Source (Files)",
+    y = "Sentiment Score"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+This is the sentiment analysis of the supreme court confirmation hearing transcripts
+
+```{r}
+View(Jan20_Supreme_Court_Confirmation_Hearing_Transcript)
+
+
+Jan20_Supreme_Court_Confirmation_Hearing_Transcript <- Jan20_Supreme_Court_Confirmation_Hearing_Transcript %>%
+  mutate(Statements = as.character(Statements))
+
+# Unnest tokens 
+tidy_text <- Jan20_Supreme_Court_Confirmation_Hearing_Transcript %>%
+  select(Statements) %>%
+  unnest_tokens(word, Statements)
+
+# Remove stop words
+tidy_text <- tidy_text %>%
+  anti_join(stop_words, by = "word")
+
+# Perform sentiment analysis using Bing lexicon
+sentiment_analysis <- tidy_text %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  count(word, sentiment, sort = TRUE)
+
+# Summarize sentiment (positive vs negative)
+sentiment_summary <- tidy_text %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  count(sentiment, sort = TRUE)
+
+# Print sentiment summary
+print(sentiment_summary)
+
+# Optional: Create a net sentiment score
+net_sentiment <- tidy_text %>%
+  inner_join(get_sentiments("bing"), by = "word") %>%
+  mutate(score = ifelse(sentiment == "positive", 1, -1)) %>%
+  summarise(total_sentiment = sum(score))
+
+# Print net sentiment score
+print(net_sentiment)
+
+# Plot the sentiment analysis results
+library(ggplot2)
+
+ggplot(sentiment_analysis, aes(x = reorder(word, n), y = n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  coord_flip() +
+  labs(title = "Sentiment Analysis of Statements",
+       x = "Words",
+       y = "Count")
+
+ggplot(sentiment_summary, aes(x = "", y = n, fill = sentiment)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  theme_void() +
+  labs(title = "Sentiment Analysis of Hearing Transcripts") +
+  scale_fill_manual(values = c("positive" = "steelblue", "negative" = "firebrick"))
+
+```
